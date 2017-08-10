@@ -1,0 +1,14 @@
+scala-uri
+  This has been locally patched to make the method
+  PercentDecoder.decodeString not protected
+  https://github.com/NET-A-PORTER/scala-uri
+  Apache 2 License
+scallop
+  https://github.com/scallop/scallop
+  MIT License
+twitter-util-eval
+  http://maven.twttr.com/com/twitter/util-eval/
+  http://maven.twttr.com/com/twitter/util-eval/6.5.0/util-eval-6.5.0.jar  
+  Scaladoc: http://twitter.github.io/util/
+  git of all utils: https://github.com/twitter/util
+  PROBLEM: only seems to work with scala 2.9.x?
