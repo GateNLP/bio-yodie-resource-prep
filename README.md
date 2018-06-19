@@ -11,6 +11,14 @@ containing everything that needs to go onto disambiguation candidates,
 and assigning information to these candidates. It also includes 
 creating scoring resources that will be used at runtime.
 
+First you need download scala 2.11.7:
+  - cd scala
+  - wget https://downloads.lightbend.com/scala/2.11.7/scala-2.11.7.tgz
+  - tar -zxvf scala-2.11.7.tgz
+
+Then compile scala scripts
+  - ant
+
 You will need a downloaded UMLS.
 
 You will need the following symbolic links:
@@ -31,6 +39,7 @@ it, and make a symbolic link. It expects a directory called
 
 tmpdata -> this is a temporary space for intermediate files, and just 
 needs to be somewhere you have space.
+
 
 You can then run bin/all.sh.
 
