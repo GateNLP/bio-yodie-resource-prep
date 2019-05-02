@@ -17,7 +17,7 @@ Pre-Requirements
         - sudo add-apt-repository ppa:webupd8team/java
         - sudo apt-get update
         - sudo apt-get install oracle-java8-installer
-  - Gate8.5 or above
+  - Gate8.4 or below
         - Gate can be downloaded from https://gate.ac.uk/download/
 
   - Groovy
