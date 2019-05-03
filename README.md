@@ -82,8 +82,9 @@ In the "scala" directory, the symbolic link "scala-latest-version" should
 point to a scala installation.
 
 ## Copy output to Bio-YODIE
-Once you finish the data preparation, you can copy the output to main Bio-YODIE (https://github.com/GateNLP/Bio-YODIE)
-First you need create a empty folder under Bio-YODIE root directory called "bio-yodie-resources"
+Once you finish the data preparation, you can copy the output to main Bio-YODIE (https://github.com/GateNLP/Bio-YODIE).
+
+First, you need to create an empty folder under Bio-YODIE root directory called "bio-yodie-resources"
 
 - mkdir bio-yodie-resources
 
