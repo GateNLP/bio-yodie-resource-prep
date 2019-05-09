@@ -81,6 +81,16 @@ stop this, comment out the relevant lines in bin/all.sh
 In the "scala" directory, the symbolic link "scala-latest-version" should
 point to a scala installation.
 
+## Change output semantic types
+You can subselect the semantic by editing config/getvars.sh, 
+Change line
+STYCLASSES='KCX' to the list you wish to output
+The style list can be found at: config/styclasses.lst
+You can also create a new semantic types in the file
+
+
+
+
 ## Copy output to Bio-YODIE
 Once you finish the data preparation, you can copy the output to main Bio-YODIE (https://github.com/GateNLP/Bio-YODIE).
 
