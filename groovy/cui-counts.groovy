@@ -19,7 +19,9 @@ Gate.setGateHome(new File(gatehome))
 Gate.runInSandbox(true)
 Gate.init()
 
-gate.Utils.loadPlugin("Format_FastInfoset")
+//gate.Utils.loadPlugin("Format_FastInfoset")
+//Gate.getCreoleRegister().registerPlugin(new Plugin.Maven('uk.ac.gate.plugins', 'format-fastinfoset', '8.5'));
+
 
 Map<String, Integer> cuicounts = new HashMap<String, Integer>();
 Map<String, String> cuilabels = new HashMap<String, String>();
