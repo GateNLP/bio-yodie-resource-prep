@@ -133,7 +133,7 @@ CREATE TABLE MRCUI (
     MAPREASON	text,
     CUI2	char(8),
     MAPIN	char(1)
-) AS SELECT SELECT * FROM CSVREAD(
+) AS SELECT * FROM CSVREAD(
     '###UMLSLOC###UMLSVERSION/META/MRCUI.RRF',
     null,
     'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
