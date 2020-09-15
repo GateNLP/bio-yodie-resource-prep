@@ -17,6 +17,8 @@
 #
 # G. Gorrell, 26 September 2016
 
+set -e
+
 if [ ! -f config/getvars.sh ]
 then
   echo 'config/getvars.sh not found!! -- are you running from the top yodie-preparation directory?'

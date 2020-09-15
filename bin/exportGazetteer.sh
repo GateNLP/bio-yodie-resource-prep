@@ -17,6 +17,8 @@
 #
 # G. Gorrell, 26 September 2016
 
+set -e
+
 PRG="$0"
 CURDIR="`pwd`"
 # need this for relative symlinks
@@ -100,8 +102,15 @@ for LANG in $LANGS ; do
 
  #$ROOTDIR/bin/createCache.sh ${OUT}/${LANG}/gazetteer-${LANG}-bio/cased-labels.def false en-US
  #$ROOTDIR/bin/createCache.sh ${OUT}/${LANG}/gazetteer-${LANG}-bio/uncased-labels.def false en-US
- rm ${OUT}/${LANG}/gazetteer-${LANG}-bio/cased-labels.gazbin
- rm ${OUT}/${LANG}/gazetteer-${LANG}-bio/uncased-labels.gazbin
+
+ # Rudolf Cardinal, 15 Sep 2020:
+ # "set -e" is helpful above, but with the comments above, the "rm" statements
+ # are trying to remove non-existent files. So we could either "set +e" again,
+ # or use "rm -f" to ignore nonexistent files. The latter is more consistent
+ # with error-checking.
+
+ rm -f ${OUT}/${LANG}/gazetteer-${LANG}-bio/cased-labels.gazbin
+ rm -f ${OUT}/${LANG}/gazetteer-${LANG}-bio/uncased-labels.gazbin
 
  echo "Finished preparing the "${LANGNAMES[${LANG}]}" gazetteer!"
 

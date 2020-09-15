@@ -16,6 +16,14 @@
 
 --G. Gorrell, 26 September 2016
 
+-- Rudolf Cardinal, 15 Sep 2020:
+-- For speed (http://h2database.com/html/performance.html#fast_import):
+SET LOG 0;  -- disablethe transaction log
+SET CACHE_SIZE 65536;  -- a large cache is faster; units are KB
+SET LOCK_MODE 0;  -- disable locking
+SET UNDO_LOG 0;  -- disable the session undo log
+-- ... and, as below, use CREATE TABLE (...) AS SELECT ..., rather than
+--     CREATE TABLE (...); INSERT INTO ... SELECT ...
 
 DROP TABLE IF EXISTS MRCONSOSUBSETTED;
 
@@ -38,9 +46,12 @@ CREATE TABLE MRCONSOSUBSETTED (
     SRL int unsigned NOT NULL,
     SUPPRESS    char(1) NOT NULL,
     CVF int unsigned
-);
-
-INSERT INTO MRCONSOSUBSETTED SELECT * FROM MRCONSO WHERE BITAND(CVF, 256) <> 0;
+) AS SELECT
+    *
+FROM
+    MRCONSO
+WHERE
+    BITAND(CVF, 256) <> 0;
 
 DROP TABLE IF EXISTS MRCONSO;
 

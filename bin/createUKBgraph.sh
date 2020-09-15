@@ -17,6 +17,8 @@
 #
 # G. Gorrell, 26 September 2016
 
+set -e
+
 ## createFastGraph.sh
 
 if [ ! -f config/getvars.sh ]

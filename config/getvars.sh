@@ -30,7 +30,13 @@ else
   export ROOT="${YODIE_PREPARATION}"
 fi
 
-export JAVA_OPTS=-Xmx30G
+# Rudolf Cardinal, 15 Sep 2020: 30GB is a high limit; processes are getting
+# killed on a machine with 16 GB RAM. In addMRCOC.sh, it's 10G; let's try that.
+# It works with the lower limit, so no need to go higher.
+# (Possibly lower still would work!)
+#
+# export JAVA_OPTS=-Xmx30G
+export JAVA_OPTS=-Xmx10G
 
 error=0
 
