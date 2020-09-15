@@ -17,6 +17,15 @@
 --G. Gorrell, 26 September 2016
 
 
+-- Rudolf Cardinal, 15 Sep 2020:
+-- For speed (http://h2database.com/html/performance.html#fast_import):
+SET LOG 0;  -- disablethe transaction log
+SET CACHE_SIZE 65536;  -- a large cache is faster; units are KB
+SET LOCK_MODE 0;  -- disable locking
+SET UNDO_LOG 0;  -- disable the session undo log
+-- ... and, as below, use CREATE TABLE (...) AS SELECT ..., rather than
+--     CREATE TABLE (...); INSERT INTO ... SELECT ...
+
 
 --DROP TABLE IF EXISTS MESHFREQ;
 --CREATE TABLE MESHFREQ (
@@ -33,8 +42,11 @@ DROP TABLE IF EXISTS PAGERANK;
 CREATE TABLE PAGERANK (
     CUI varchar(40),
     PROB float
+) AS SELECT * FROM CSVREAD(
+    '###SRCS/umls_ukbstatic.txt',
+    null,
+    'fieldSeparator=' || CHAR(9)
 );
-INSERT INTO PAGERANK SELECT * FROM CSVREAD('###SRCS/umls_ukbstatic.txt', null, 'fieldSeparator=' || CHAR(9));
 
 CREATE INDEX X_PAGERANK_CUI ON PAGERANK(CUI);
 
@@ -44,9 +56,11 @@ CREATE TABLE CUIFREQ (
     CUI char(8) NOT NULL,
     COUNT int unsigned,
     NORM float
+) AS SELECT * FROM CSVREAD(
+    '###TMPDATA/cuifreq.tsv',
+    null,
+    'fieldSeparator=' || CHAR(9)
 );
-
-INSERT INTO CUIFREQ SELECT * FROM CSVREAD('###TMPDATA/cuifreq.tsv', null, 'fieldSeparator=' || CHAR(9));
 
 CREATE INDEX X_CUIFREQ_CUI ON CUIFREQ(CUI);
 
@@ -56,9 +70,11 @@ CREATE TABLE LABELFREQ (
     CUI char(8) NOT NULL,
     COUNT int unsigned,
     NORM float
+) AS SELECT * FROM CSVREAD(
+    '###TMPDATA/labelfreq.tsv',
+    null,
+    'fieldSeparator=' || CHAR(9)
 );
-
-INSERT INTO LABELFREQ SELECT * FROM CSVREAD('###TMPDATA/labelfreq.tsv', null, 'fieldSeparator=' || CHAR(9));
 
 CREATE INDEX X_LABELFREQ_CUI ON LABELFREQ(CUI);
 
@@ -67,9 +83,11 @@ DROP TABLE IF EXISTS STYCLASS;
 CREATE TABLE IF NOT EXISTS STYCLASS (
     STYCLASS CHAR(3) NOT NULL,
     STY VARCHAR(50) NOT NULL,
+) AS SELECT * FROM CSVREAD(
+    '###TMPDATA/styclasses.csv',
+    'STYCLASS,STY',
+    'fieldDelimiter='''
 );
-
-INSERT INTO STYCLASS SELECT * FROM CSVREAD('###TMPDATA/styclasses.csv','STYCLASS,STY','fieldDelimiter=''');
 
 CREATE INDEX X_STYCLASS_STY ON STYCLASS(STY);
 
@@ -81,9 +99,14 @@ CREATE TABLE MRSTYSELECTED (
     STY varchar(50) NOT NULL,
     ATUI        varchar(11) NOT NULL,
     CVF int unsigned
+) AS SELECT
+    CUI, TUI, STN, STY, ATUI, CVF
+FROM MRSTY
+WHERE STY IN (
+    SELECT DISTINCT STY
+    FROM STYCLASS WHERE
+    STYCLASS IN ###SELECTEDSTYCLASSES
 );
-
-INSERT INTO MRSTYSELECTED SELECT CUI, TUI, STN, STY, ATUI, CVF FROM MRSTY WHERE STY IN (SELECT DISTINCT STY FROM STYCLASS WHERE STYCLASS IN ###SELECTEDSTYCLASSES);
 
 CREATE INDEX X_MRSTYSELECTED_STY ON MRSTYSELECTED(STY);
 CREATE INDEX X_MRSTYSELECTED_CUI ON MRSTYSELECTED(CUI);
@@ -103,19 +126,19 @@ CREATE TABLE PREFERREDLABELS (
  minlen integer(10),
  VOCABCOUNT int,
  VOCABS varchar(2500)
-);
-
-insert into PREFERREDLABELS select 
- mrconso.cui,
- substring(mrconso.str,1,100),
- '10',
- mrconso.ispref,
- '0',
- '0',
- COUNT(MRCONSO.SAB) AS VOCABCOUNT,
- GROUP_CONCAT(MRCONSO.SAB) AS VOCABS
-from mrconso
-GROUP BY MRCONSO.CUI, mrconso.ispref, mrconso.str;
+) AS SELECT
+    mrconso.cui,
+    substring(mrconso.str,1,100),
+    '10',
+    mrconso.ispref,
+    '0',
+    '0',
+    COUNT(MRCONSO.SAB) AS VOCABCOUNT,
+    GROUP_CONCAT(MRCONSO.SAB) AS VOCABS
+FROM
+    mrconso
+GROUP BY
+     MRCONSO.CUI, mrconso.ispref, mrconso.str;
 
 update PREFERREDLABELS set score = score - 3*((length(preflabel) - length(
 replace(
@@ -153,11 +176,14 @@ update PREFERREDLABELS set score = score + 1
 drop table if exists maxscores;
 
 create table maxscores(
- cui char(8),
- maxscore integer(10)
-);
-
-insert into maxscores select cui, max(score) from PREFERREDLABELS group by cui;
+    cui char(8),
+    maxscore integer(10)
+) AS select
+    cui, max(score)
+from
+    PREFERREDLABELS
+group by
+     cui;
 
 drop index if exists maxscore_cui;
 drop index if exists preflabel_cui;
@@ -172,11 +198,14 @@ delete from PREFERREDLABELS where score < maxscore;
 drop table if exists minlens;
 
 create table minlens(
- cui char(8),
- minlen integer(10)
-);
-
-insert into minlens select cui, min(length(preflabel)) from PREFERREDLABELS group by cui;
+    cui char(8),
+    minlen integer(10)
+) AS select
+    cui, min(length(preflabel))
+from
+    PREFERREDLABELS
+group by
+    cui;
 
 drop index if exists minlens_cui;
 
@@ -190,9 +219,12 @@ DROP TABLE IF EXISTS PREF;
 CREATE TABLE PREF (
     CUI char(8) NOT NULL,
     PREF char(500) NOT NULL
-);
-
-INSERT INTO PREF select cui, min(preflabel) from preferredlabels group by cui, lcase(preflabel);
+) AS select
+    cui, min(preflabel)
+from
+    preferredlabels
+group by
+    cui, lcase(preflabel);
 
 create index pref_cui on pref (cui);
 
@@ -202,9 +234,7 @@ CREATE TABLE PREFFINAL (
     PREF char(500) NOT NULL,
 --    VOCABCOUNT int,
 --    VOCABS varchar(2500)
-);
-
-INSERT INTO PREFFINAL select
+) AS select
     cui,
     min(pref)
 --    0,
@@ -231,20 +261,18 @@ CREATE TABLE CUIINFO (
     CRISFREQ int,
     CRISNORM float,
     PAGERANK float
-);
-
-INSERT INTO CUIINFO SELECT DISTINCT
-  MRSTYSELECTED.CUI,
-  GROUP_CONCAT(DISTINCT(MRSTYSELECTED.TUI)),
-  GROUP_CONCAT(DISTINCT(MRSTYSELECTED.STY)),
-  MIN(PREFFINAL.PREF),
-  GROUP_CONCAT(DISTINCT(MRCONSO.SAB)) AS VOCABS,
-  COUNT(MRCONSO.SAB) AS VOCABCOUNT,
---  PREFFINAL.VOCABS,
---  PREFFINAL.VOCABCOUNT,
-  CUIFREQ.COUNT,
-  CUIFREQ.NORM,
-  PAGERANK.PROB
+) AS SELECT DISTINCT
+    MRSTYSELECTED.CUI,
+    GROUP_CONCAT(DISTINCT(MRSTYSELECTED.TUI)),
+    GROUP_CONCAT(DISTINCT(MRSTYSELECTED.STY)),
+    MIN(PREFFINAL.PREF),
+    GROUP_CONCAT(DISTINCT(MRCONSO.SAB)) AS VOCABS,
+    COUNT(MRCONSO.SAB) AS VOCABCOUNT,
+    --  PREFFINAL.VOCABS,
+    --  PREFFINAL.VOCABCOUNT,
+    CUIFREQ.COUNT,
+    CUIFREQ.NORM,
+    PAGERANK.PROB
 FROM
    MRSTYSELECTED
 LEFT OUTER JOIN PREFFINAL ON PREFFINAL.CUI = MRSTYSELECTED.CUI
@@ -270,23 +298,21 @@ CREATE TABLE LABELINFO (
     CRISCUIFREQ int,
     CRISCUINORM float,
     PAGERANK float
-);
-
-INSERT INTO LABELINFO SELECT DISTINCT
-  MRCONSO.STR AS LABEL,
-  MRCONSO.CUI,
-  CUIINFO.STYS,
-  CUIINFO.TUIS,
-  MIN(CUIINFO.PREF),
-  GROUP_CONCAT(DISTINCT(MRCONSO.SAB)),
-  CUIINFO.VOCABS,
-  LABELFREQ.COUNT,
-  LABELFREQ.NORM,
-  CUIINFO.CRISFREQ,
-  CUIINFO.CRISNORM,
-  CUIINFO.PAGERANK
+) AS SELECT DISTINCT
+    MRCONSO.STR AS LABEL,
+    MRCONSO.CUI,
+    CUIINFO.STYS,
+    CUIINFO.TUIS,
+    MIN(CUIINFO.PREF),
+    GROUP_CONCAT(DISTINCT(MRCONSO.SAB)),
+    CUIINFO.VOCABS,
+    LABELFREQ.COUNT,
+    LABELFREQ.NORM,
+    CUIINFO.CRISFREQ,
+    CUIINFO.CRISNORM,
+    CUIINFO.PAGERANK
 FROM
-   MRCONSO
+    MRCONSO
 INNER JOIN CUIINFO ON MRCONSO.CUI = CUIINFO.CUI
 LEFT OUTER JOIN LABELFREQ ON MRCONSO.CUI = LABELFREQ.CUI AND MRCONSO.STR = LABELFREQ.LABEL 
 WHERE LENGTH(MRCONSO.STR)<100
@@ -295,20 +321,20 @@ GROUP BY MRCONSO.CUI, LABEL, CUIINFO.STYS, LABELFREQ.COUNT, LABELFREQ.NORM
 ORDER BY LABEL;
 
 INSERT INTO LABELINFO SELECT DISTINCT
-  LCASE(MRCONSO.STR) AS LABEL,
-  MRCONSO.CUI,
-  CUIINFO.STYS,
-  CUIINFO.TUIS,
-  MIN(CUIINFO.PREF),
-  GROUP_CONCAT(DISTINCT(MRCONSO.SAB)),
-  CUIINFO.VOCABS,
-  LABELFREQ.COUNT,
-  LABELFREQ.NORM,
-  CUIINFO.CRISFREQ,
-  CUIINFO.CRISNORM,
-  CUIINFO.PAGERANK
+    LCASE(MRCONSO.STR) AS LABEL,
+    MRCONSO.CUI,
+    CUIINFO.STYS,
+    CUIINFO.TUIS,
+    MIN(CUIINFO.PREF),
+    GROUP_CONCAT(DISTINCT(MRCONSO.SAB)),
+    CUIINFO.VOCABS,
+    LABELFREQ.COUNT,
+    LABELFREQ.NORM,
+    CUIINFO.CRISFREQ,
+    CUIINFO.CRISNORM,
+    CUIINFO.PAGERANK
 FROM
-   MRCONSO
+    MRCONSO
 INNER JOIN CUIINFO ON MRCONSO.CUI = CUIINFO.CUI
 LEFT OUTER JOIN LABELFREQ ON MRCONSO.CUI = LABELFREQ.CUI AND MRCONSO.STR = LABELFREQ.LABEL 
 WHERE LENGTH(MRCONSO.STR)<100

@@ -16,6 +16,15 @@
 
 --G. Gorrell, 26 September 2016
 
+-- Rudolf Cardinal, 15 Sep 2020:
+-- For speed (http://h2database.com/html/performance.html#fast_import):
+SET LOG 0;  -- disablethe transaction log
+SET CACHE_SIZE 65536;  -- a large cache is faster; units are KB
+SET LOCK_MODE 0;  -- disable locking
+SET UNDO_LOG 0;  -- disable the session undo log
+-- ... and, as below, use CREATE TABLE (...) AS SELECT ..., rather than
+--     CREATE TABLE (...); INSERT INTO ... SELECT ...
+
 
 DROP TABLE IF EXISTS MRCOCSUBSET;
 
@@ -28,10 +37,12 @@ CREATE TABLE IF NOT EXISTS MRCOCSUBSET (
 CREATE INDEX IF NOT EXISTS X_MRCOCSUBSET_CUI1 ON MRCOCSUBSET(CUI1);
 
 DROP TABLE IF EXISTS MRCOCCUI1;
-
-CREATE TABLE IF NOT EXISTS MRCOCCUI1 (CUI1 CHAR(8) NOT NULL);
-
-INSERT INTO MRCOCCUI1 SELECT DISTINCT CUI1 FROM MRCOC2000SELECTED;
+CREATE TABLE (
+    CUI1 CHAR(8) NOT NULL
+) AS SELECT DISTINCT
+    CUI1
+FROM
+    MRCOC2000SELECTED;
 
 DROP TABLE IF EXISTS MRCOCCUI1SUBSET;
 

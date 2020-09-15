@@ -16,6 +16,14 @@
 
 --G. Gorrell, 26 September 2016
 
+-- Rudolf Cardinal, 15 Sep 2020:
+-- For speed (http://h2database.com/html/performance.html#fast_import):
+SET LOG 0;  -- disablethe transaction log
+SET CACHE_SIZE 65536;  -- a large cache is faster; units are KB
+SET LOCK_MODE 0;  -- disable locking
+SET UNDO_LOG 0;  -- disable the session undo log
+-- ... and, as below, use CREATE TABLE (...) AS SELECT ..., rather than
+--     CREATE TABLE (...); INSERT INTO ... SELECT ...
 
 DROP TABLE IF EXISTS MRCOC2000SELECTED;
 CREATE TABLE MRCOC2000SELECTED (
@@ -35,10 +43,11 @@ CREATE TABLE MRCOC2000SELECTED (
     Star2OnlyFreq int,
     SH1OnlyFreq int,
     SH2OnlyFreq int
+) AS SELECT * FROM CSVREAD(
+    '###SRCS/mrcoc/summary_CoOccurs_2016_since2000.txt',
+     null,
+     'fieldSeparator=|'
 );
-
-INSERT INTO MRCOC2000SELECTED SELECT * FROM CSVREAD(
-'###SRCS/mrcoc/summary_CoOccurs_2016_since2000.txt', null, 'fieldSeparator=|');
 
 CREATE INDEX X_MRCOC2000SELECTED_CUI1 ON MRCOC2000SELECTED(CUI1);
 CREATE INDEX X_MRCOC2000SELECTED_CUI2 ON MRCOC2000SELECTED(CUI2);

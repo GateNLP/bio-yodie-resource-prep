@@ -17,6 +17,15 @@
 --G. Gorrell, 26 September 2016
 
 
+-- Rudolf Cardinal, 15 Sep 2020:
+-- For speed (http://h2database.com/html/performance.html#fast_import):
+SET LOG 0;  -- disablethe transaction log
+SET CACHE_SIZE 65536;  -- a large cache is faster; units are KB
+SET LOCK_MODE 0;  -- disable locking
+SET UNDO_LOG 0;  -- disable the session undo log
+-- ... and, as below, use CREATE TABLE (...) AS SELECT ..., rather than
+--     CREATE TABLE (...); INSERT INTO ... SELECT ...
+
 
 DROP TABLE IF EXISTS umls_labels_iso639_codes;
 
@@ -48,11 +57,11 @@ CREATE TABLE MRCOLS (
     MAX	int unsigned,
     FIL	varchar(50),
     DTY	varchar(40)
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRCOLS.RRF',
+    null,
+    'fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRCOLS SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRCOLS.RRF',
-null,
-'fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRCONSO_ALLLANGS;
@@ -75,11 +84,11 @@ CREATE TABLE MRCONSO_ALLLANGS (
     SRL	int unsigned NOT NULL,
     SUPPRESS	char(1) NOT NULL,
     CVF	int unsigned
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRCONSO.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRCONSO_ALLLANGS SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRCONSO.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 DROP TABLE IF EXISTS MRCONSO;
 
@@ -102,10 +111,15 @@ CREATE TABLE MRCONSO (
     SRL	int unsigned NOT NULL,
     SUPPRESS	char(1) NOT NULL,
     CVF	int unsigned
-);
-
-INSERT INTO MRCONSO SELECT MRCONSO_ALLLANGS.* FROM umls_labels_iso639_codes JOIN MRCONSO_ALLLANGS ON (umls_labels_iso639_codes.umlslabel=MRCONSO_ALLLANGS.LAT)
-WHERE umls_labels_iso639_codes.iso6391 IN ###LANGLIST;
+) AS SELECT
+    MRCONSO_ALLLANGS.*
+FROM
+    umls_labels_iso639_codes
+JOIN
+    MRCONSO_ALLLANGS
+    ON (umls_labels_iso639_codes.umlslabel=MRCONSO_ALLLANGS.LAT)
+WHERE
+    umls_labels_iso639_codes.iso6391 IN ###LANGLIST;
 
 DROP TABLE IF EXISTS MRCONSO_ALLLANGS;
 
@@ -119,11 +133,11 @@ CREATE TABLE MRCUI (
     MAPREASON	text,
     CUI2	char(8),
     MAPIN	char(1)
+) AS SELECT SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRCUI.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRCUI SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRCUI.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRDEF;
@@ -136,11 +150,11 @@ CREATE TABLE MRDEF (
     DEF	text NOT NULL,
     SUPPRESS	char(1) NOT NULL,
     CVF	int unsigned
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRDEF.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRDEF SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRDEF.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRDOC;
@@ -149,11 +163,11 @@ CREATE TABLE MRDOC (
     VALUE	varchar(200),
     TYPE	varchar(50) NOT NULL,
     EXPL	text
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRDOC.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRDOC SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRDOC.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRFILES;
@@ -164,11 +178,11 @@ CREATE TABLE MRFILES (
     CLS	int unsigned,
     RWS	int unsigned,
     BTS	bigint
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRFILES.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRFILES SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRFILES.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRHIER;
@@ -182,11 +196,11 @@ CREATE TABLE MRHIER (
     PTR	text,
     HCD	varchar(100),
     CVF	int unsigned
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRHIER.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRHIER SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRHIER.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRRANK;
@@ -195,11 +209,11 @@ CREATE TABLE MRRANK (
     SAB	varchar(40) NOT NULL,
     TTY	varchar(40) NOT NULL,
     SUPPRESS	char(1) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRRANK.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRRANK SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRRANK.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRREL;
@@ -220,11 +234,11 @@ CREATE TABLE MRREL (
     DIR	varchar(1),
     SUPPRESS	char(1) NOT NULL,
     CVF	int unsigned
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRREL.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRREL SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRREL.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRSAB;
@@ -254,11 +268,11 @@ CREATE TABLE MRSAB (
     SABIN	char(1) NOT NULL,
     SSN	text NOT NULL,
     SCIT	text NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRSAB.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRSAB SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRSAB.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRSAT;
@@ -276,11 +290,11 @@ CREATE TABLE MRSAT (
     ATV	text,
     SUPPRESS	char(1) NOT NULL,
     CVF	int unsigned
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRSAT.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRSAT SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRSAT.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRSTY;
@@ -291,11 +305,11 @@ CREATE TABLE MRSTY (
     STY	varchar(50) NOT NULL,
     ATUI	varchar(11) NOT NULL,
     CVF	int unsigned
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRSTY.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRSTY SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRSTY.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRXNS_ENG;
@@ -305,11 +319,11 @@ CREATE TABLE MRXNS_ENG (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRXNS_ENG.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRXNS_ENG SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRXNS_ENG.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRXNW_ENG;
@@ -319,11 +333,11 @@ CREATE TABLE MRXNW_ENG (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRXNW_ENG.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRXNW_ENG SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRXNW_ENG.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRAUI;
@@ -337,11 +351,11 @@ CREATE TABLE MRAUI (
     AUI2	varchar(9) NOT NULL,
     CUI2	char(8) NOT NULL,
     MAPIN	char(1) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRAUI.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRAUI SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRAUI.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS MRXW_ENG;
@@ -351,32 +365,32 @@ CREATE TABLE MRXW_ENG (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/MRXW_ENG.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO MRXW_ENG SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/MRXW_ENG.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS AMBIGSUI;
 CREATE TABLE AMBIGSUI (
     SUI	varchar(10) NOT NULL,
     CUI	char(8) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/AMBIGSUI.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO AMBIGSUI SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/AMBIGSUI.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
 DROP TABLE IF EXISTS AMBIGLUI;
 CREATE TABLE AMBIGLUI (
     LUI	varchar(10) NOT NULL,
     CUI	char(8) NOT NULL
+) AS SELECT * FROM CSVREAD(
+    '###UMLSLOC###UMLSVERSION/META/AMBIGLUI.RRF',
+    null,
+    'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= '
 );
-INSERT INTO AMBIGLUI SELECT * FROM CSVREAD(
-'###UMLSLOC###UMLSVERSION/META/AMBIGLUI.RRF',
-null,
-'charset=UTF-8 fieldSeparator=| escape= fieldDelimiter= ');
 
 
