@@ -17,6 +17,8 @@
 #
 # G. Gorrell, 26 September 2016
 
+set -e
+
 PRG="$0"
 CURDIR="`pwd`"
 # need this for relative symlinks

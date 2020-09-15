@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 PRG="$0"
 CURDIR="`pwd`"
 # need this for relative symlinks

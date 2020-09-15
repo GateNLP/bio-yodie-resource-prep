@@ -29,6 +29,8 @@
 ##  exit 1
 ##fi
 
+set -e
+
 if [ "${GATE_HOME}" == "" ]
 then
   echo Environment variable GATE_HOME not set
